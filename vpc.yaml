@@ -1,140 +1,93 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "CloudFormation for VPC"
-
+Description: Example
 Resources:
-  # My VPC
-  MyVPC:
-    Type: "AWS::EC2::VPC"
+  myInternetGateway:
+    Type: AWS::EC2::InternetGateway
     Properties:
-      CidrBlock: "172.16.0.0/16"
+      Tags:
+        - Key: "Name"
+          Value: "a_gateway"
+
+  myVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/24
       EnableDnsSupport: true
       EnableDnsHostnames: true
-      Tags:
-        - Key: Name
-          Value: MyVPC
-  # Public Subnet in AZ 1
-  PublicSubnet1A:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: "172.16.1.0/24"
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: PublicSubnet1A
-  # App Private Subnet in AZ 1
-  AppPrivateSubnet1A:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: "172.16.2.0/24"
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      Tags:
-        - Key: Name
-          Value: AppPrivateSubnet1A
-  # Data Private Subnet in AZ 1
-  DataPrivateSubnet1A:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: "172.16.3.0/24"
-      AvailabilityZone: !Select [0, !GetAZs ""]
-      Tags:
-        - Key: Name
-          Value: DataPrivateSubnet1A
-  # Public Subnet in AZ 2
-  PublicSubnet2B:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: "172.16.4.0/24"
-      AvailabilityZone: !Select [1, !GetAZs ""]
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: PublicSubnet2B
-  # App Private Subnet in AZ 2
-  AppPrivateSubnet2B:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: "172.16.5.0/24"
-      AvailabilityZone: !Select [1, !GetAZs ""]
-      Tags:
-        - Key: Name
-          Value: AppPrivateSubnet2B
-  # Data Private Subnet in AZ 2
-  DataPrivateSubnet2B:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: "172.16.6.0/24"
-      AvailabilityZone: !Select [1, !GetAZs ""]
-      Tags:
-        - Key: Name
-          Value: DataPrivateSubnet2B
-  # Internet Gateway IGW
-  InternetGateway:
-    Type: "AWS::EC2::InternetGateway"
-    Properties:
-      Tags:
-        - Key: Name
-          Value: MyVPC-IGW
+      InstanceTenancy: default
 
-  # Attach Gateway
+  # Attach Internet gateway to created VPC
   AttachGateway:
-    Type: "AWS::EC2::VPCGatewayAttachment"
+    Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref MyVPC
-      InternetGatewayId: !Ref InternetGateway
+      VpcId:
+        Ref: myVPC
+      InternetGatewayId:
+        Ref: myInternetGateway
 
-  # Route Table
-  PublicRouteTable:
-    Type: "AWS::EC2::RouteTable"
+  # Create public routes table for VPC
+  myPublicRouteTable:
+    Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref MyVPC
+      VpcId: !Ref myVPC
       Tags:
-        - Key: Name
-          Value: PublicRouteTable
+        - Key: "Name"
+          Value: "public_routes"
 
-  # Public Route
-  PublicRoute:
-    Type: "AWS::EC2::Route"
+  # Create a route for the table which will forward the traffic
+  # from the gateway
+  myDefaultPublicRoute:
+    Type: AWS::EC2::Route
     DependsOn: AttachGateway
     Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: "0.0.0.0/0"
-      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref myPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref myInternetGateway
 
-  # Public Subnet Association
-  PublicSubnet1ARouteTableAssociation:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
+  # Subnet within VPC which will use route table (with default route)
+  # from Internet gateway
+  mySubnet:
+    Type: AWS::EC2::Subnet
     Properties:
-      SubnetId: !Ref PublicSubnet1A
-      RouteTableId: !Ref PublicRouteTable
+      AvailabilityZone: ""
+      CidrBlock: 10.0.0.0/25
+      MapPublicIpOnLaunch: true
+      VpcId:
+        Ref: myVPC
 
-  # Bastion Host EC2
+  # Associate route table (which contains default route) to newly created subnet
+  myPublicRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref myPublicRouteTable
+      SubnetId: !Ref mySubnet
+
+  # Add Bastion Host resource
   BastionHost:
-    Type: "AWS::EC2::Instance"
+    Type: AWS::EC2::Instance
     Properties:
+      ImageId: "ami-0b72821e2f351e396"
       InstanceType: t2.micro
       KeyName: "EC2_Tutorial"
-      ImageId: ami-07d9456e59793a7d5
-      SubnetId: !Ref PublicSubnet1A
-      SecurityGroupIds:
-        - !Ref BastionSG
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          DeleteOnTermination: "true"
+          SubnetId:
+            Ref: mySubnet
       Tags:
-        - Key: Name
-          Value: BastionHost
-  # Bastion Securtiy Group
+        - Key: "Name"
+          Value: "bastion_host"
+
+  # Add Bastion Security Group resource
   BastionSG:
-    Type: "AWS::EC2::SecurityGroup"
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "Enable SSH access"
-      VpcId: !Ref MyVPC
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        - CidrIp: 0.0.0.0/0
           FromPort: 22
           ToPort: 22
-          CidrIp: 24.38.251.7/32
+          IpProtocol: tcp
+      VpcId:
+        Ref: myVPC
