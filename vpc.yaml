@@ -119,6 +119,8 @@ Resources:
     Type: "AWS::EC2::Instance"
     Properties:
       InstanceType: t2.micro
+      KeyName: 'bastion'
+      ImageId: ami-0427090fd1714168b
       SubnetId: !Ref PublicSubnet1A
       SecurityGroupIds:
         - !Ref BastionSG
