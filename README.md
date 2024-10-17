@@ -25,13 +25,26 @@ This is what the code produced in the AWS console
 -For secure communication with servers configured SSH key pairs for authentication 
 
 Validated my code by successfully accessing the bastion host from my local machine
+
 <img width="592" alt="Bastion Host on local machine" src="https://github.com/user-attachments/assets/86b3b83f-fc2d-4ec6-bba8-e3547d7eb3d7">
 
-###### Last Create IAM User, ALB, S3, RDS
+#### Last Create IAM User, ALB, S3, RDS
 
-**Application Load Balancer**
+**Application Load Balancer** (ec2.yaml)
 Created an Application Load Balancer to direct traffic to two targets/EC2 instances, 
 specifically PublicSubnet1A and PublicSubnet2B. A listener was configured to check for incoming requests and handle them based on predefined rules. 
 In this case, it is set to listen for HTTP traffic on port 80, and when a request is received, it is forwarded to the target group. 
 The ALB distributes any traffic that reaches the target group accordingly.
+
 <img width="764" alt="ALB" src="https://github.com/user-attachments/assets/83ddfabe-550b-4aab-83a4-fbd45fc504ac">
+
+**Auto-Scaling** and **Cloudwatch
+Added Auto Scaling and CloudWatch Alarms to monitor the group
+
+- Created a launch configuration to define instance settings. The auto-scaling group was set with a minimum of 1 instance, a maximum of 3, and a desired capacity of 2.
+- Configured the alarm to trigger if CPU utilization exceeds 70%. It averages data points over a 300-second (5-minute) period and requires only one data point to activate.
+
+<img width="698" alt="ASG" src="https://github.com/user-attachments/assets/d16c8da5-6546-42f4-a09c-4e9c7b625c23">
+
+<img width="760" alt="CPU" src="https://github.com/user-attachments/assets/e1c21726-39ae-4cf7-a906-e3996e1fe45f">
+
