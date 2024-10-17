@@ -10,6 +10,7 @@ In this project, I created a secure and highly available  infrastructure using A
 - Two availability zones
 
 This is what the code produced in the AWS console
+
 <img width="566" alt="Resource map" src="https://github.com/user-attachments/assets/778c2dab-0e5d-4684-a692-3f51ad27ce29">
 
 ####Step Two 
