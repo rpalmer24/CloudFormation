@@ -3,7 +3,7 @@
 
 In this project, I created a secure and highly available  infrastructure using AWS CloudFormation.
 
-### Frist Step
+#### Frist Step
 - Designed VPC (vpc.yaml)
 - Created Public Sunbnets (2) using AWS EC2
 - Created Private subnets (2) for  using AWS EC2
@@ -28,7 +28,7 @@ Validated my code by successfully accessing the bastion host from my local machi
 
 <img width="592" alt="Bastion Host on local machine" src="https://github.com/user-attachments/assets/86b3b83f-fc2d-4ec6-bba8-e3547d7eb3d7">
 
-#### Last Create IAM User, ALB, S3, RDS
+#### Last Step: Create IAM User, ALB, S3, RDS
 
 **Application Load Balancer** (ec2.yaml)
 Created an Application Load Balancer to direct traffic to two targets/EC2 instances, 
